@@ -1,0 +1,33 @@
+[
+  {
+    "model": "clubs.club",
+    "pk": 2,
+    "fields": {
+      "name": "Club2",
+      "location": "123456",
+      "description": "club2 ",
+      "number_of_members": 3
+    }
+  },
+  {
+    "model": "clubs.club",
+    "pk": 3,
+    "fields": {
+      "name": "Club3",
+      "location": "123456",
+      "description": "club3 ",
+      "number_of_members": 3
+    }
+  },
+  {
+    "model": "clubs.club",
+    "pk": 4,
+    "fields": {
+      "name": "Club4",
+      "location": "123456",
+      "description": "club4 ",
+      "number_of_members": 1
+    }
+  }
+
+]

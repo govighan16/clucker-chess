@@ -1,0 +1,32 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container">
+  <div class="row content">
+    <div class="col-xs-12 col-lg-6 col-xl-4">
+      <h1>Chess Club | Club Profile</h1>
+          <img src="{{ owner.gravatar }}" alt="Gravatar of {{ owner.username }}" class="rounded-circle profile-image" >
+          <div class="profile-text">
+            <h4>Owner Name:</h4>
+                <p>{{ owner.username }}</p>
+            <h4>Owner Bio:</h4>
+                <p>{{ owner.bio }}</p>
+            <h4>Club Name:</h4>
+                <p>{{ club.name }}</p>
+            <h4>Location:</h4>
+                <p>{{ club.location }}</p>
+            <h4>Description:</h4>
+                <p>{{ club.description }}</p>
+            <h4>Number of Members:</h4>
+                <p>{{ club.number_of_members}}</p>
+            <h4>Status in current club</h4>
+            {% if club_role == "No role" %}
+                <p><button type="button" onclick="location.href='{% url 'applyUser' role.id %}'">Apply</button></p>
+            {% else %}
+                <p>{{ club_role }}</p>
+                <td><a href="{% url 'list' club.id %}">List</a></td>
+            {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

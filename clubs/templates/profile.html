@@ -1,0 +1,33 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container">
+  <div class="dropdown">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item dropdown">
+        <a class="nav-link" href="#" id="user-account-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span  class="bi bi-arrow-bar-down"></span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="user-account-dropdown">
+          {% for club in clubs_in %}
+          <li><a class="dropdown-item" href="{% url 'club_info' club.id %}">{{club.name}}</a></li>
+          <li><hr class="dropdown-divider"></li>
+          {% endfor %}
+        </ul>
+      </li>
+    </ul>
+   </div>
+  <div class="row">
+    <div class="col-6">
+      <h1>Chess Club | Own Profile Page</h1>
+      <img src="{{ user.gravatar }}" alt="Gravatar of {{ user.username }}" class="rounded-circle profile-image" >
+      <div class="profile-text">
+      <form action="{% url 'profile' %}" method="POST">
+        {% csrf_token %}
+        {% include 'partials/bootstrap_form.html' with form=form %}
+        <input type="submit" value="Update" class="btn btn-primary">
+      </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

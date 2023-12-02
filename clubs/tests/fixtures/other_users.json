@@ -1,0 +1,41 @@
+[
+  {
+    "model": "clubs.user",
+    "pk": 2,
+    "fields": {
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "username": "@janedoe",
+      "email": "janedoe@example.org",
+      "bio": "My bio",
+      "personal_statement": "Hi I am Jane",
+      "chess_Level": 1
+    }
+  },
+  {
+    "model": "clubs.user",
+    "pk": 3,
+    "fields": {
+      "first_name": "Maria",
+      "last_name": "Evans",
+      "username": "@mariaevans",
+      "email": "mariaevens@example.org",
+      "bio": "My bio",
+      "personal_statement": "Hi I am Maria",
+      "chess_Level": 1
+    }
+  },
+  {
+    "model": "clubs.user",
+    "pk": 4,
+    "fields": {
+      "first_name": "David",
+      "last_name": "Smith",
+      "username": "@davidsmith",
+      "email": "davidsmith@example.org",
+      "bio": "My bio",
+      "personal_statement": "Hi I am David",
+      "chess_Level": 3
+    }
+  }
+]

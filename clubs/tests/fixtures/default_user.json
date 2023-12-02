@@ -1,0 +1,17 @@
+[
+  {
+    "model": "clubs.user",
+    "pk": 1,
+    "fields": {
+      "first_name": "Joe",
+      "last_name": "Doe",
+      "username": "@joedoe",
+      "email": "joe@example.org",
+      "bio": "My bio",
+      "personal_statement": "Hi I am Joe",
+      "password": "pbkdf2_sha256$260000$J0mTr4HfcDwd7llPfX1GjJ$113z9VdXxAHsxgwSV4oDqOKQs1jyYUqeK4FNb/VBth8=",
+      "chess_Level": "4"
+
+    }
+  }
+]

@@ -1,0 +1,31 @@
+{% extends 'base_content.html'%}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h1>Chess Club | Club list</h1>
+      <h2>All Clubs</h2>
+      <table class="table">
+        <th>Gravatar</th>
+        <th>Club Name</th>
+        <th>Location</th>
+        <th>Description</th>
+        <th>Number of Members</th>
+        <th>Club Link</th>
+        {% for club in clubs %}
+          <tr>
+            <td>
+              <img src="{{ user.gravatar }}" alt="Gravatar of {{ user.username }}" class="rounded-circle" >
+            </td>
+            <td>{{ club.name }}</td>
+            <td>{{ club.location }}</td>
+            <td>{{ club.description }}</td>
+            <td>{{ club.number_of_members }}</td>
+            <td><a href="{% url 'club_info' club.id %}">{{ club.name }}</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

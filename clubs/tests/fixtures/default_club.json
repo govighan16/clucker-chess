@@ -1,0 +1,12 @@
+[
+  {
+    "model": "clubs.club",
+    "pk": 1,
+    "fields": {
+      "name" : "London Club",
+      "location" : "London",
+      "description" : "The Official London Chess Club",
+      "number_of_members" : 1
+    }
+  }
+]

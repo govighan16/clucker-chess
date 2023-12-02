@@ -1,0 +1,50 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container">
+  <div class="dropdown">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item dropdown">
+        <a class="nav-link" href="#" id="user-account-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span  class="bi bi-arrow-bar-down"></span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="user-account-dropdown">
+          {% for club in clubs_in %}
+          <li><a class="dropdown-item" href="{% url 'club_info' club.id %}">{{club.name}}</a></li>
+          <li><hr class="dropdown-divider"></li>
+          {% endfor %}
+        </ul>
+      </li>
+    </ul>
+   </div>
+  <div class="row">
+    <div class="col-12">
+      <h1>Chess Club | List</h1>
+      <h2>{{ current_club.name }}</h2>
+      <table class="table">
+        <th>Gravatar</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Bio</th>
+        {% if current_role == "Owner" or current_role == "Officer" %}
+        <th>Profile Link</th>
+        <th>Email</th>
+        {% endif %}
+        {% for user in users %}
+          <tr>
+            <td>
+              <img src="{{ user.gravatar }}" alt="Gravatar of {{ user.username }}" class="rounded-circle profile-image" >
+            </td>
+            <td>{{ user.first_name }}</td>
+            <td>{{ user.last_name }}</td>
+            <td>{{ user.bio }}</td>
+            {% if current_role == "Owner" or current_role  == "Officer" %}
+            <td><a href="{% url 'show_user' current_club.id user.id %}">{{ user.username }}</a></td>
+            <td>{{ user.email }}</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

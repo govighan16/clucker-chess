@@ -1,0 +1,320 @@
+from django.shortcuts import redirect, render
+from .form import SignUpForm, LogInForm, UpdatePasswordForm, ProfileForm, ClubRegisterForm
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.contrib.auth import authenticate, login, logout
+from .models import User, Club, Role
+from django.contrib import messages
+from django.contrib.auth.hashers import check_password
+from django.http import HttpResponseForbidden
+from .helpers import *
+
+
+# Create your views here.
+# return the home page
+#views
+
+def log_in(request):
+    if request.method == 'POST' :
+        form = LogInForm(request.POST)
+        if form.is_valid():
+            print('valid')
+            email = form.cleaned_data.get('email')
+            password = form.cleaned_data.get('password')
+            user = authenticate(email=email, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('profile')
+
+            messages.add_message(request, messages.ERROR, "The credentials provided were invalid!")
+    form = LogInForm();
+    return render(request, 'log_in.html', {'form':form, 'current_user':request.user})
+
+
+def log_out(request):
+    logout(request)
+    return redirect('home')
+
+
+def home(request):
+    return render(request,'home.html');
+
+
+def sign_up(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            print('valid')
+            user = form.save()
+            messages.add_message(request, messages.SUCCESS, "Application successfully submitted")
+            login(request, user)
+            return redirect('clubs_list')
+    else:
+        form = SignUpForm()
+    return render(request, 'sign_up.html', {'form': form})
+
+
+@login_required
+def list(request, club_id):
+    current_user = request.user
+    current_club = Club.objects.get(id = club_id)
+    current_role = current_club.get_club_role(current_user)
+    if current_role== 'Applicant':
+        users = current_club.get_Applicant()
+    elif current_role== 'Owner' or current_role == 'Officer':
+        users = current_club.get_all_Members()
+    elif current_role== 'Member':
+        users = current_club.get_Members()
+    return render(request,'list.html',{'users':users, 'current_role':current_role })
+
+
+#@login_required
+#@owner_required
+def profile(request):
+    current_user = request.user
+    if request.method == 'POST':
+        form = ProfileForm(instance = current_user, data = request.POST)
+        if form.is_valid():
+            messages.add_message(request, messages.SUCCESS, "Profile updated!")
+            form.save()
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance = current_user)
+    return render(request, 'profile.html', {'form':form})
+
+
+@login_required
+def password(request):
+    current_user = request.user
+    if request.method == 'POST':
+        form = UpdatePasswordForm(data=request.POST)
+        if form.is_valid():
+            password = form.cleaned_data.get('password')
+            if check_password(password, current_user.password):
+                new_password = form.cleaned_data.get('new_password')
+                current_user.set_password(new_password)
+                current_user.save()
+                login(request, current_user)
+                messages.add_message(request, messages.SUCCESS, "Password updated!")
+                return redirect('profile')
+    form = UpdatePasswordForm()
+    return render(request, 'edit_password.html', {'form': form})
+
+
+
+##@login_required
+##@membership_required
+def show_user(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = User.objects.get(id = role.user.id)
+        current_user = request.user
+        current_role = Role.objects.get(user = current_user, club = current_club).club_role
+        if current_role == 'Officer' or current_role == 'Owner':
+            show = True
+        else:
+            show = False
+    except ObjectDoesNotExist:
+        return redirect('club_list')
+    else:
+        return render(request, 'show_user.html', {'user': select_user, 'club':current_club, 'role':role, 'show':show})
+
+
+def promoteUser(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = User.objects.get(id = role.user.id)
+        current_user = request.user
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('list', club_id = current_club.id)
+    else:
+
+        if current_club.get_club_role(current_user) == 'Owner':
+            if current_club.get_club_role(select_user) == 'Member':
+                current_club.promote_for_club(select_user)
+                messages.add_message(request, messages.SUCCESS, "Promote Successfully")
+                return redirect('list', club_id = current_club.id)
+            else:
+                messages.add_message(request, messages.ERROR, "This user is already an officer, they cannot be promoted further")
+                return redirect('list', club_id = current_club.id)
+        else:
+            messages.add_message(request, messages.ERROR, "You are not the owner of the club")
+            return redirect('list', club_id = current_club.id)
+        return redirect('list', club_id = current_club.id)
+
+
+def transferOwner(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = Club.objects.get(id = role.user.id)
+        current_user = request.user
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('applicant_list')
+    else:
+
+        if current_club.get_club_role(current_user) == "Owner":
+            if current_club.get_club_role(select_user) == 'Officer':
+                current_club.transfer_ownership(current_user, select_user)
+                return redirect('user_list')
+            else:
+                messages.add_message(request, messages.ERROR, "This user is not an officer, they cannot become owner of the club without being an officer!")
+                return redirect('user_list')
+        else:
+            messages.add_message(request, messages.ERROR, "You are not the owner of the club")
+            return redirect('user_list')
+
+def demoteUser(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = User.objects.get(id = role.user.id)
+        current_user = request.user
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('list', club_id = current_club.id)
+    else:
+        if current_club.get_club_role(current_user) == "Owner":
+            if current_club.get_club_role(select_user) == 'Officer':
+                current_club.demote_for_club(select_user)
+                messages.add_message(request, messages.SUCCESS, "Demote Successfully")
+                return redirect('list', club_id = current_club.id)
+            else:
+                messages.add_message(request, messages.ERROR, "This user is a member, they cannot be demoted further")
+                return redirect('list', club_id = current_club.id)
+        else:
+            messages.add_message(request, messages.ERROR, "You are not the owner of the club")
+            return redirect('list', club_id = current_club.id)
+        return redirect('list', club_id = current_club.id)
+
+
+def acceptUser(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = User.objects.get(id = role.user.id)
+        current_user = request.user
+        current_role = Role.objects.get(user = current_user, club = current_club).club_role
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('list', club_id = current_club.id)
+    else:
+        if current_role == 'Officer' or current_role == 'Owner':
+            if current_club.get_club_role(select_user)== 'Applicant':
+                current_club.approve_for_club(select_user)
+                messages.add_message(request, messages.SUCCESS, "Accept Successfully")
+                return redirect('list', club_id = current_club.id)
+            else:
+                messages.add_message(request, messages.ERROR, "This user is already a member, they cannot be approve further")
+                return redirect('list', club_id = current_club.id)
+        else:
+            messages.add_message(request, messages.ERROR, "You are not a officer or owner of this club")
+            return redirect('list', club_id = current_club.id)
+        return redirect('list', club_id = current_club.id)
+
+
+def deleteUser(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = User.objects.get(id = role.user.id)
+        current_user = request.user
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('list', club_id = current_club.id)
+    else:
+        if current_role == 'Officer' or current_role == 'Owner':
+            if current_club.get_club_role(select_user)== 'Applicant':
+                current_club.delete_for_club(select_user)
+                messages.add_message(request, messages.SUCCESS, "Delete Successfully")
+                return redirect('list', club_id = current_club.id)
+            else:
+                messages.add_message(request, messages.ERROR, "This user is already a member, they cannot be deleted further")
+                return redirect('list', club_id = current_club.id)
+        else:
+            messages.add_message(request, messages.ERROR, "You are not a officer or owner of this club")
+            return redirect('list', club_id = current_club.id)
+        return redirect('list', club_id = current_club.id)
+
+
+def applyUser(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        current_user = request.user
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('clubs_list')
+    else:
+        if current_club.get_club_role(current_user) == 'No role':
+            current_club.apply_for_club(current_user)
+            messages.add_message(request, messages.SUCCESS, "Apply Successfully")
+            return redirect('clubs_list')
+        else:
+            messages.add_message(request, messages.ERROR, "You are already in the club")
+            return redirect('clubs_list')
+
+<<<<<<< HEAD
+
+def transferOwnership(request, role_id):
+    try:
+        role = Role.objects.get(id = role_id)
+        current_club = Club.objects.get(id = role.club.id)
+        select_user = User.objects.get(id = role.user.id)
+        current_user = request.user
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, "Club not exists")
+        return redirect('list', club_id = current_club.id)
+    else:
+        if current_club.get_club_role(current_user) == 'Owner':
+            if current_club.get_club_role(select_user)== 'Officer':
+                current_club.transfer_ownership(current_user, select_user)
+                messages.add_message(request, messages.SUCCESS, "Transfer Ownership Successfully")
+                return redirect('list', club_id = current_club.id)
+            else:
+                messages.add_message(request, messages.ERROR, "The one you select is not the officer")
+                return redirect('list', club_id = current_club.id)
+        else:
+            messages.add_message(request, messages.ERROR, "You are not the owner of this club")
+            return redirect('list', club_id = current_club.id)
+        return redirect('list', club_id = current_club.id)
+
+
+=======
+@login_required
+>>>>>>> 761d2ffcccaa8060734721ba25c21c9753846925
+def clubRegister(request):
+        if request.method == 'POST':
+            current_user = request.user
+            form = ClubRegisterForm(request.POST)
+            if form.is_valid():
+                print('valid')
+                club = form.save()
+                club.create_club(current_user)
+                messages.add_message(request, messages.SUCCESS, "Application successfully submitted")
+                return redirect('clubs_list')
+        else:
+            form = ClubRegisterForm()
+        return render(request,'club_register.html',{'form':form})
+
+#@login_required
+#@club_exists
+def clubs_home_page(request):
+    clubs = Club.objects.all()
+    user = request.user
+    return render(request,'clubs_list.html',{'clubs':clubs, 'user':user} )
+
+
+def club_info(request, club_id):
+    try:
+        club = Club.objects.get(id = club_id)
+        current_user = request.user
+        role = Role.objects.get(club=club, user = current_user)
+    except ObjectDoesNotExist:
+        return redirect('clubs_list')
+    else:
+        return render(request, 'club_info.html', {'club': club, 'user':current_user, 'role':role})
